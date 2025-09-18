@@ -17,6 +17,7 @@ type cliCommand struct {
 
 type Config struct {
 	cache    pokecache.Cache
+	location string
 	previous string
 	next     string
 }
@@ -29,6 +30,9 @@ func startRepl() {
 		scanner.Scan()
 		input := cleanInput(scanner.Text())
 		if command, ok := getCommands()[input[0]]; ok {
+			if command.name == "explore" {
+				config.location = input[1]
+			}
 			err := command.callback(config)
 			if err != nil {
 				fmt.Printf("Error exiting pokedex: %v", err)
@@ -64,6 +68,11 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Lists the previous 20 location areas in the Pokemon world",
 			callback:    commandMapb,
+		},
+		"explore": {
+			name:        "explore",
+			description: "Lists all encounterable pokemon in a location area `explore <location name>`",
+			callback:    explore,
 		},
 	}
 }

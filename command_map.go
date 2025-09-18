@@ -7,21 +7,14 @@ import (
 	"net/http"
 )
 
-type response struct {
-	Count    int            `json:"count"`
-	Next     string         `json:"next"`
-	Previous string         `json:"previous"`
-	Results  []locationArea `json:"results"`
-}
-
-type locationArea struct {
-	Id                   int            `json:"id"`
-	Name                 string         `json:"name"`
-	Index                int            `json:"game_index"`
-	EncounterMethodRates []any          `json:"encounter_method_rates"`
-	Location             map[string]any `json:"location"`
-	Names                []any          `json:"names"`
-	PokemonEncounters    []any          `json:"pokemon_encounters"`
+type groupLocationResponse struct {
+	Count    int    `json:"count"`
+	Next     string `json:"next"`
+	Previous string `json:"previous"`
+	Results  []struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"results"`
 }
 
 func commandMap(config *Config) error {
@@ -33,7 +26,7 @@ func commandMap(config *Config) error {
 		url = config.next
 	}
 	if entry, ok := config.cache.Get(url); ok {
-		data := response{}
+		data := groupLocationResponse{}
 		err := json.Unmarshal(entry, &data)
 		if err != nil {
 			return fmt.Errorf("error decoding location data from cache: %w", err)
@@ -55,7 +48,7 @@ func commandMap(config *Config) error {
 	if err != nil {
 		return fmt.Errorf("error reading bytes from response: %w", err)
 	}
-	data := response{}
+	data := groupLocationResponse{}
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling bytes: %w", err)
@@ -83,7 +76,7 @@ func commandMapb(config *Config) error {
 		return fmt.Errorf("error calling location area endpoint: %w", err)
 	}
 	defer res.Body.Close()
-	data := response{}
+	data := groupLocationResponse{}
 	decoder := json.NewDecoder(res.Body)
 	if err = decoder.Decode(&data); err != nil {
 		return fmt.Errorf("error decoding location data: %w", err)
