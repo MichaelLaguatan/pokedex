@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"internal/pokecache"
 	"os"
 	"strings"
+	"time"
 )
 
 type cliCommand struct {
@@ -14,19 +16,20 @@ type cliCommand struct {
 }
 
 type Config struct {
+	cache    pokecache.Cache
 	previous string
 	next     string
 }
 
 func startRepl() {
 	scanner := bufio.NewScanner(os.Stdin)
-	config := Config{}
+	config := &Config{cache: pokecache.NewCache(time.Second * 5)}
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
 		input := cleanInput(scanner.Text())
 		if command, ok := getCommands()[input[0]]; ok {
-			err := command.callback(&config)
+			err := command.callback(config)
 			if err != nil {
 				fmt.Printf("Error exiting pokedex: %v", err)
 			}

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -31,15 +32,33 @@ func commandMap(config *Config) error {
 	} else {
 		url = config.next
 	}
+	if entry, ok := config.cache.Get(url); ok {
+		data := response{}
+		err := json.Unmarshal(entry, &data)
+		if err != nil {
+			return fmt.Errorf("error decoding location data from cache: %w", err)
+		}
+		config.previous = data.Previous
+		config.next = data.Next
+		locations := data.Results
+		for _, location := range locations {
+			fmt.Printf("%v\n", location.Name)
+		}
+		return nil
+	}
 	res, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("error calling location area endpoint: %w", err)
 	}
 	defer res.Body.Close()
+	bytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading bytes from response: %w", err)
+	}
 	data := response{}
-	decoder := json.NewDecoder(res.Body)
-	if err = decoder.Decode(&data); err != nil {
-		return fmt.Errorf("error decoding location data: %w", err)
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling bytes: %w", err)
 	}
 	config.previous = data.Previous
 	config.next = data.Next
@@ -47,7 +66,7 @@ func commandMap(config *Config) error {
 	for _, location := range locations {
 		fmt.Printf("%v\n", location.Name)
 	}
-	fmt.Printf("Config next: %v\n Config previous: %v", config.next, config.previous)
+	config.cache.Add(url, bytes)
 	return nil
 }
 
