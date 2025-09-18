@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"internal/pokecache"
 	"os"
 	"strings"
-	"time"
+
+	"github.com/MichaelLaguatan/pokedex/internal/pokeapi"
 )
 
 type cliCommand struct {
@@ -16,15 +16,14 @@ type cliCommand struct {
 }
 
 type Config struct {
-	cache    pokecache.Cache
-	location string
-	previous string
-	next     string
+	pokeapiClient pokeapi.Client
+	location      string
+	previous      string
+	next          string
 }
 
-func startRepl() {
+func startRepl(config *Config) {
 	scanner := bufio.NewScanner(os.Stdin)
-	config := &Config{cache: pokecache.NewCache(time.Second * 5)}
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
